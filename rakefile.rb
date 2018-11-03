@@ -17,7 +17,7 @@ end
 desc "Build the AI app"
 task :build do
     cooker().option("release").generate(:ninja, "ai/gen").ninja().run()
-    cooker().option("debug").generate(:ninja, "ai/app").ninja().run()
+    cooker().option("release").generate(:ninja, "ai/app").ninja().run()
 end
 
 desc "clean"

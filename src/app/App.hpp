@@ -215,7 +215,6 @@ namespace app {
                     ImGui::NewLine();
                     ImGui::Separator();
                 }
-                ImGui::Separator();
             }
 
             const auto select_exhaustive_params = !!learn_ && learn_->algo == Algo::Exhaustive && !learn_->do_learn;
@@ -251,7 +250,6 @@ namespace app {
                 }
             }
             ImGui::Separator();
-
 
             MSS_END();
         }
