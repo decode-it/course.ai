@@ -257,6 +257,11 @@ int main()
                 break;
         }
 
+        std::filesystem::path dir = "data";
+        if (!std::filesystem::exists(dir))
+            std::filesystem::create_directory(dir);
+        fn = dir / fn;
+
         std::cout << "Creating " << fn << " ... ";
         if (mlp)
             s11n::write_object_to_file(fn, ":mlp.Structure", *mlp);
