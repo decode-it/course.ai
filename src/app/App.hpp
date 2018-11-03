@@ -43,7 +43,7 @@ namespace app {
             /* if (false) */
             {
                 desktop_mode.width /= 2;
-                desktop_mode.height /= 2;
+                /* desktop_mode.height /= 2; */
             }
             sf::RenderWindow window(desktop_mode, "");
 
@@ -105,7 +105,7 @@ namespace app {
     private:
         bool imgui_mainloop_()
         {
-            MSS_BEGIN(bool, "");
+            MSS_BEGIN(bool);
 
             cstr_.reset();
 
@@ -283,7 +283,11 @@ namespace app {
             }
             if (ImGui::Button("Randomize absolute"))
             {
-                model.init_scg = true;
+                if (learn_)
+                {
+                    learn_->scg_do_init = true;
+                    learn_->adam_do_init = true;
+                }
                 std::normal_distribution<double> gaussian(0.0, model.randomize_weights_stddev);
                 for (auto &l: model.parameters.layers)
                     for (auto &n: l.neurons)
@@ -296,7 +300,11 @@ namespace app {
             ImGui::SameLine();
             if (ImGui::Button("Randomize relative"))
             {
-                model.init_scg = true;
+                if (learn_)
+                {
+                    learn_->scg_do_init = true;
+                    learn_->adam_do_init = true;
+                }
                 std::normal_distribution<double> gaussian(0.0, model.randomize_weights_stddev);
                 for (auto &l: model.parameters.layers)
                     for (auto &n: l.neurons)
@@ -321,7 +329,21 @@ namespace app {
             Transform t(wnd, 3,1);
             io_.line(1, sf::Color(30, 30, 0), [&](auto &line){ line.point(t(-3.0,0.0)).point(t(3.0,0.0)); });
             io_.line(1, sf::Color(30, 30, 0), [&](auto &line){ line.point(t(0.0,-1.0)).point(t(0.0,1.0)); });
+
+            ImGui::SliderFloat("Weight scale", &model.weight_scale, -1.5, 1.5);
+            ImGui::SameLine();
+            if (ImGui::Button("Apply"))
+            {
+                auto multiply_weights = [&](auto &neuron, unsigned int, unsigned int){
+                    for (auto &w: neuron.weights)
+                        w *= model.weight_scale;
+                    neuron.bias *= model.weight_scale;
+                };
+                model.parameters.each_neuron(multiply_weights);
+            }
+
             MSS(gubg::neural::setup(model.weights, model.parameters));
+
             if (false) {}
             else if (model.structure.nr_inputs == 1 && model.structure.nr_outputs() == 1)
             {
@@ -541,17 +563,17 @@ namespace app {
                 if (ImGui::RadioButton("ADAM", learn.algo == Algo::Adam))
                     learn.algo = Algo::Adam;
 
-                if (ImGui::SliderInt("Exhaustive points to scan", &learn.exhaustive_nr, 2, 100))
-                    learn.current_ixs.clear();
-                learn.exhaustive_nr = std::max(learn.exhaustive_nr, 2);
-
-                if (learn.do_learn)
+                switch (learn.algo)
                 {
-                    switch (learn.algo)
-                    {
-                        case Algo::NoLearn:
-                            break;
-                        case Algo::Exhaustive:
+                    case Algo::NoLearn:
+                        break;
+                    case Algo::Exhaustive:
+                        if (ImGui::SliderInt("Exhaustive points to scan", &learn.exhaustive_nr, 2, 100))
+                            learn.current_ixs.clear();
+                        learn.exhaustive_nr = std::max(learn.exhaustive_nr, 2);
+
+                        if (learn.do_learn)
+                        {
                             if (learn.current_ixs.empty())
                             {
                                 learn.current_ixs.resize(simulator.nr_weights());
@@ -604,50 +626,75 @@ namespace app {
                             for (auto ix: learn.current_ixs)
                                 std::cout << ix << ' ';
                             std::cout << std::endl;
-                            break;
-                        case Algo::SteepestDescent:
-                            {
-                                learn.sd_step = std::max(learn.sd_step, 0.0001f);
-                                ImGui::SliderFloat("Steepest descent step", &learn.sd_step, 0.0001, 0.3);
+                        }
+                        break;
+                    case Algo::SteepestDescent:
+                        {
+                            ImGui::SliderFloat("Steepest descent step", &learn.sd_step, 0.0, 0.01);
 
-                                trainer.set_max_gradient_norm(10.0);
+                            ImGui::SliderFloat("Steepest descent max norm", &learn.sd_max_norm, 0.0, 100.0);
+                            trainer.set_max_gradient_norm(learn.sd_max_norm);
+
+                            if (learn.do_learn)
+                            {
                                 double newlp;
                                 MSS(trainer.train_sd(newlp, model.weights.data(), model.cost_stddev, model.weights_stddev, learn.sd_step));
                             }
-                            break;
-                        case Algo::SCG:
+                        }
+                        break;
+                    case Algo::SCG:
+                        {
+                            if (ImGui::Button("Reinit SCG"))
+                                learn.scg_do_init;
+                            if (learn.scg_do_init)
+                                trainer.init_scg();
+                            learn.scg_do_init = false;
+
+                            if (learn.do_learn)
                             {
-                                if (model.init_scg)
-                                    trainer.init_scg();
-                                model.init_scg = false;
                                 double newlp;
                                 MSS(trainer.train_scg(newlp, model.weights.data(), model.cost_stddev, model.weights_stddev, 10));
                             }
-                            break;
-                        case Algo::Adam:
+                        }
+                        break;
+                    case Algo::Adam:
+                        {
+                            if (ImGui::SliderFloat("Adam step size", &learn.adam_alpha, 0.0001, 0.1))
+                                learn.adam_do_init = true;
+                            if (ImGui::SliderFloat("Adam decay", &learn.adam_beta1, 0.8, 1.0))
+                                learn.adam_do_init = true;
+
+                            if (learn.adam_do_init)
+                            {
+                                gubg::neural::Trainer<double>::AdamParams adam;
+                                adam.alpha = learn.adam_alpha;
+                                adam.beta1 = learn.adam_beta1;
+                                trainer.init_adam(adam);
+                                learn.adam_do_init = false;
+                            }
+
+                            if (learn.do_learn)
                             {
                                 double newlp;
                                 if (!trainer.train_adam(newlp, model.weights.data(), model.cost_stddev, model.weights_stddev))
-                                {
-                                    gubg::neural::Trainer<double>::AdamParams adam;
-                                    adam.alpha = 0.01;
-                                    adam.beta1 = 0.9;
-                                    trainer.init_adam(adam);
-                                }
+                                    learn.adam_do_init = true;
                             }
-                            break;
-                        case Algo::Metropolis:
-                            {
-                                learn.motion_stddev = std::max(learn.motion_stddev, 0.0001f);
-                                ImGui::SliderFloat("Metropolis motion stddev", &learn.motion_stddev, 0.0001f, 0.1f);
+                        }
+                        break;
+                    case Algo::Metropolis:
+                        {
+                            learn.metropolis_stddev = std::max(learn.metropolis_stddev, 0.0001f);
+                            ImGui::SliderFloat("Metropolis motion stddev", &learn.metropolis_stddev, 0.0001f, 0.1f);
 
+                            if (learn.do_learn)
+                            {
                                 double newlp;
-                                MSS(trainer.train_metropolis(newlp, model.weights.data(), model.cost_stddev, model.weights_stddev, learn.motion_stddev, 100));
+                                MSS(trainer.train_metropolis(newlp, model.weights.data(), model.cost_stddev, model.weights_stddev, learn.metropolis_stddev, 100));
                             }
-                            break;
-                    }
-                    MSS(gubg::neural::copy_weights(model.parameters, model.weights));
+                        }
+                        break;
                 }
+                MSS(gubg::neural::copy_weights(model.parameters, model.weights));
             }
 
             MSS_END();
@@ -678,12 +725,12 @@ namespace app {
             unsigned int nix = 0;
             std::optional<gubg::neural::Simulator<double>> simulator;
             size_t input, bias, output;
+            float weight_scale = 1.0f;
             std::vector<double> weights, states;
             double weights_stddev = 3.0;
             double cost_stddev = 0.1;
             double randomize_weights_stddev = 1.0;
             size_t wanted_output, loglikelihood;
-            bool init_scg = true;
         };
         std::optional<Model> model_;
 
@@ -724,8 +771,18 @@ namespace app {
             std::array<float, 1000> costs{};
             std::optional<gubg::neural::Trainer<double>> trainer;
             Algo algo = Algo::NoLearn;
-            float sd_step = 0.01;
-            float motion_stddev = 0.001;
+
+            float sd_step = 0.003;
+            float sd_max_norm = 100.0;
+        
+            bool scg_do_init = true;
+
+            bool adam_do_init = true;
+            float adam_alpha = 0.01;
+            float adam_beta1 = 0.9;
+
+            float metropolis_stddev = 0.001;
+
             int exhaustive_nr = 10;
             std::vector<unsigned int> current_ixs;
             double best_ll;
