@@ -1,0 +1,11 @@
+include("../gubg")
+
+cook["ai"].recipe("gen", TargetType.Executable, fun(rcp){
+    rcp.add("src", "gen/**.[hc]pp")
+    rcp.depends_on("gubg/func")
+})
+
+cook["ai"].recipe("app", TargetType.Executable, fun(rcp){
+    rcp.add("src", "app/**.[hc]pp")
+    rcp.depends_on("gubg/func")
+})
