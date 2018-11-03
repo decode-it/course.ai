@@ -146,7 +146,7 @@ namespace app {
             if (setup_default_structure || gubg::imgui::select_file("MLP structure", structure_fn_))
             {
                 if (setup_default_structure)
-                    structure_fn_ = "data/mlp.tanh_deep_network.naft";
+                    structure_fn_ = "data/mlp.tanh_neuron.naft";
                 std::cout << "Selected structure file " << structure_fn_ << std::endl;
                 learn_.reset();
                 model_.reset();
@@ -218,6 +218,8 @@ namespace app {
                 ImGui::Separator();
             }
 
+            const auto select_exhaustive_params = !!learn_ && learn_->algo == Algo::Exhaustive && !learn_->do_learn;
+
             //Display selected neuron
             ImGui::Text(cstr_("Selected neuron: layer ", model.lix, " neuron ", model.nix));
             {
@@ -227,11 +229,21 @@ namespace app {
                     float weight = neuron.weights[wix];
                     ImGui::SliderFloat(cstr_("Weight ", wix), &weight, -3.0, 3.0);
                     neuron.weights[wix] = weight;
+                    if (select_exhaustive_params)
+                    {
+                        ImGui::SameLine();
+                        ImGui::Checkbox(cstr_("Exhaustive", wix), &learn_->exhaustive_map[ParamIX(model.lix, model.nix, wix)]);
+                    }
                 }
                 {
                     float bias = neuron.bias;
                     ImGui::SliderFloat(cstr_("Bias"), &bias, -3.0, 3.0);
                     neuron.bias = bias;
+                    if (select_exhaustive_params)
+                    {
+                        ImGui::SameLine();
+                        ImGui::Checkbox("Exhaustive bias", &learn_->exhaustive_map[ParamIX(model.lix, model.nix, -1)]);
+                    }
                 }
                 {
                     auto &neuron = model.structure.layers[model.lix].neurons[model.nix];
@@ -503,16 +515,14 @@ namespace app {
                         learn.output.open(learn.output_fn);
                 }
                 else
-                {
-                    //We just stopped learning: close the output stream
-                    learn.output.close();
                     learn.output_fn.clear();
-                }
             }
 
             //Specifying the output filename is only allowed when learning is pauzed
             if (!learn.do_learn)
             {
+                learn.output.close();
+
                 auto &output_fn = learn.output_fn;
                 const auto bufsize = 1024;
                 char buffer[bufsize];
@@ -568,64 +578,91 @@ namespace app {
                     case Algo::NoLearn:
                         break;
                     case Algo::Exhaustive:
-                        if (ImGui::SliderInt("Exhaustive points to scan", &learn.exhaustive_nr, 2, 100))
-                            learn.current_ixs.clear();
-                        learn.exhaustive_nr = std::max(learn.exhaustive_nr, 2);
-
-                        if (learn.do_learn)
                         {
-                            if (learn.current_ixs.empty())
-                            {
-                                learn.current_ixs.resize(simulator.nr_weights());
-                            }
-                            else
-                            {
-                                if (learn.best_ixs.empty() || learn.total_ll > learn.best_ll)
-                                {
-                                    learn.best_ixs = learn.current_ixs;
-                                    learn.best_ll = learn.total_ll;
-                                }
+                            unsigned int nr_dim = 0;
+                            for (const auto &p: learn.exhaustive_map)
+                                if (p.second)
+                                    ++nr_dim;
+                            ImGui::Text("Nr dimensions to learn exhaustively: %d", nr_dim);
 
-                                //Increment current_ixs
-                                bool carry = true;
-                                for (auto &ix: learn.current_ixs)
-                                {
-                                    if (carry)
-                                        ++ix;
-                                    carry = (ix >= learn.exhaustive_nr);
-                                    if (carry)
-                                        ix = 0;
-                                    else
-                                        break;
-                                }
+                            if (ImGui::SliderInt("Exhaustive points to scan", &learn.exhaustive_nr, 2, 100))
+                                learn.current_ixs.clear();
+                            learn.exhaustive_nr = std::max(learn.exhaustive_nr, 2);
 
+                            if (learn.do_learn)
+                            {
                                 const auto d = (3.0 - -3.0)/(learn.exhaustive_nr-1);
                                 auto trans = [&](unsigned int ix){
                                     return -3.0 + d*ix; 
                                 };
 
                                 auto set_weights = [&](const auto &ixs){
-                                    auto ix = ixs.begin();
-                                    for (auto lix = 0u; lix < model.structure.layers.size(); ++lix)
-                                        for (auto nix = 0u; nix < model.structure.layers[lix].neurons.size(); ++nix)
+                                    auto ix_it = ixs.begin();
+                                    auto weight_it = model.weights.begin();
+                                    auto assign_if_selected = [&](const auto &neuron, unsigned int lix, unsigned int nix){
+                                        for (auto wix = 0u; wix < neuron.weights.size()+1; ++wix)
                                         {
-                                            for (auto &weight: model.parameters.neuron(lix, nix).weights)
-                                                weight = trans(*ix++);
-                                            model.parameters.neuron(lix, nix).bias = trans(*ix++);
+                                            const auto ix = *ix_it++;
+                                            if (ix >= 0)
+                                                *weight_it = trans(ix);
+                                            ++weight_it;
                                         }
+                                    };
+                                    model.parameters.each_neuron(assign_if_selected);
                                 };
 
-                                set_weights(learn.current_ixs);
-
-                                if (carry)
+                                if (learn.current_ixs.empty())
                                 {
-                                    learn.algo = Algo::NoLearn;
-                                    set_weights(learn.best_ixs);
+                                    //Setup the current_ixs based on the selected weights/biases to use during exhaustive learning
+                                    learn.current_ixs.resize(simulator.nr_weights());
+                                    auto ix = learn.current_ixs.begin();
+                                    auto enable_if_selected = [&](const auto &neuron, unsigned int lix, unsigned int nix){
+                                        for (auto wix = 0u; wix < neuron.weights.size(); ++wix)
+                                            *ix++ = learn.exhaustive_map[ParamIX(lix, nix, wix)] ? 0 : -1;
+                                        *ix++ = learn.exhaustive_map[ParamIX(lix, nix, -1)] ? 0 : -1;
+                                    };
+                                    model.parameters.each_neuron(enable_if_selected);
+
+                                    set_weights(learn.current_ixs);
+
+                                    learn.best_ixs.clear();
                                 }
+                                else
+                                {
+                                    if (learn.best_ixs.empty() || learn.total_ll > learn.best_ll)
+                                    {
+                                        learn.best_ixs = learn.current_ixs;
+                                        learn.best_ll = learn.total_ll;
+                                    }
+
+                                    //Increment current_ixs
+                                    bool carry = true;
+                                    for (auto &ix: learn.current_ixs)
+                                    {
+                                        if (ix == -1)
+                                            //Skip this ix
+                                            continue;
+                                        if (carry)
+                                            ++ix;
+                                        carry = (ix >= learn.exhaustive_nr);
+                                        if (carry)
+                                            ix = 0;
+                                        else
+                                            break;
+                                    }
+
+                                    set_weights(learn.current_ixs);
+
+                                    if (carry)
+                                    {
+                                        learn.do_learn = false;
+                                        set_weights(learn.best_ixs);
+                                    }
+                                }
+                                for (auto ix: learn.current_ixs)
+                                    std::cout << ix << ' ';
+                                std::cout << std::endl;
                             }
-                            for (auto ix: learn.current_ixs)
-                                std::cout << ix << ' ';
-                            std::cout << std::endl;
                         }
                         break;
                     case Algo::SteepestDescent:
@@ -761,6 +798,30 @@ namespace app {
         std::filesystem::path data_fn_;
         std::optional<DataSet> dataset_;
 
+        struct ParamIX
+        {
+            unsigned int lix;
+            unsigned int nix;
+            int wix;
+            ParamIX(unsigned int lix, unsigned int nix, int wix): lix(lix), nix(nix), wix(wix) {}
+            bool operator<(const ParamIX &rhs) const
+            {
+                if (lix < rhs.lix)
+                    return true;
+                if (lix == rhs.lix)
+                {
+                    if (nix < rhs.nix)
+                        return true;
+                    if (nix == rhs.nix)
+                    {
+                        if (wix < rhs.wix)
+                            return true;
+                    }
+                }
+                return false;
+            }
+        };
+
         enum class Algo {NoLearn, Exhaustive, Metropolis, SteepestDescent, SCG, Adam};
         struct Learn
         {
@@ -774,7 +835,7 @@ namespace app {
 
             float sd_step = 0.003;
             float sd_max_norm = 100.0;
-        
+
             bool scg_do_init = true;
 
             bool adam_do_init = true;
@@ -783,10 +844,11 @@ namespace app {
 
             float metropolis_stddev = 0.001;
 
+            std::map<ParamIX, bool> exhaustive_map;
             int exhaustive_nr = 10;
-            std::vector<unsigned int> current_ixs;
+            std::vector<int> current_ixs;
             double best_ll;
-            std::vector<unsigned int> best_ixs;
+            std::vector<int> best_ixs;
         };
         std::optional<Learn> learn_;
         Learn &goc_learn_()
