@@ -742,8 +742,15 @@ namespace app {
         void load_font_()
         {
             font_.emplace();
-            std::string fn = std::getenv("gubg");
-            fn += "/fonts/GenBasR.ttf";
+            std::string fn = "GenBasR.ttf";
+            {
+                auto gubg = std::getenv("gubg");
+                if (!!gubg)
+                {
+                    fn = gubg;
+                    fn += "/fonts/GenBasR.ttf";
+                }
+            }
             if (!font_->loadFromFile(fn))
             {
                 error_ << "Could not load the font from " << fn;
