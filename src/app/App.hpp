@@ -742,7 +742,7 @@ namespace app {
         void load_font_()
         {
             font_.emplace();
-            std::string fn = "GenBasR.ttf";
+            std::string fn = "fonts/GenBasR.ttf";
             {
                 auto gubg = std::getenv("gubg");
                 if (!!gubg)
