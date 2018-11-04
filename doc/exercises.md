@@ -9,17 +9,16 @@ Load each of the `data/mlp.*_neuron.naft` models and investigate visually the ef
 
 * What happens when the weight is increased?
 * What happens when the bias is increased?
+* Create a schematic drawing for each transfer function.
 
-### Single hidden layer models
-
-#### Linear hidden layer model
+### Linear hidden layer model
 
 Load the `data/mlp.linear_hidden_layer.naft` model and set its parameters manually, or randomly:
 
 * Is there any advantage of using _multi-layered_ linear models over a single linear neuron?
 * Is there any advantage of using _multi-layered_ non-linear models over a single non-linear neuron?
 
-#### Tanh hidden layer model
+### Tanh hidden layer model
 
 Load the `data/mlp.tanh_hidden_layer.naft` model.
 
@@ -65,9 +64,7 @@ Repeat the same exercise for `data/data.noisy_sine.naft` and `data/mlp.tanh_hidd
 * What is the minimal cost you can achieve? Note it down.
 
 
-## Learning from data
-
-### Exhaustive learning
+## Exhaustive learning
 
 Exhaustive learning will change selected model parameters independently, effectively walking a grid. To use the exhaustive learning mode, you have to:
 
@@ -77,13 +74,13 @@ Exhaustive learning will change selected model parameters independently, effecti
 * Set the desired number of points to scan.
 * Enable the `Learn` checkbox. Once exhaustive learning search the grid for the optimal parameters, it will switch into `NoLearn` learning mode.
 
-#### Linear regression
+### Linear regression
 
 Load the `data/data.noisy_linear.naft` dataset and `data/mlp.linear_neuron.naft` model. Use exhaustive learning to search the weight and bias space for this simple model.
 
 * Can it do better than your manual learning above? Why?
 
-#### Visualizations
+### Visualizations
 
 Load the `data/data.noisy_linear.naft` dataset and `data/mlp.linear_neuron.naft` model. Use exhaustive learning one both parameters using 50 steps. Before starting to learn, specify the `Output filename` as `data.ssv`; this file will contain all the model parameters, the data cost, weight cost and total cost during the learning process. The last line will contain the optimal parameters found by the exhaustive search learner.
 
@@ -107,7 +104,7 @@ Install `gnuplot` and use it to visualize:
       set dgrid3d 50,50
       splot "data.ssv" using 1:2:3 with pm3d
 
-#### Line search
+### Line search
 
 Load the `data/data.noisy_sine.naft` dataset and `data/mlp.tanh_hidden_layer.naft` model. Find a reasonable random starting point and perform a line search for all parameters:
 
@@ -121,7 +118,8 @@ Load the `data/data.noisy_sine.naft` dataset and `data/mlp.tanh_hidden_layer.naf
   * Measure how long it takes to learn these 2 dimensions
 * Based on your timing from above, how long would it take to learn _all_ parameters together using exhaustive learning?
 
-### Metropolis
+
+## Metropolis
 
 The Metropolis-Hastings algorithm creates a sequence of model parameters that will converge to the _a-posteriori_ distribution $p(weights|dataset, output stddev, weights stddev)$. This distribution over the model parameters favours those parameters that provide a good fit for the data while keeping the magnitude of the weights reasonable. The terms _good fit_ and _reasonable magnitude_ are controlled via `Ouput stddev` and `Weights stddev`.
 
@@ -134,7 +132,7 @@ The Metropolis-Hastings algorithm works as follows:
 5. Else, we accept `candidate` as the new `weights` only with probability $p(candidate)/p(weight)$
 6. Goto step 2
 
-#### Linear model
+### Linear model
 
 Load the `data/data.noisy_linear.naft` dataset and `data/mlp.linear_neuron.naft` model. Start the Metropolis-Hasting learning:
 
@@ -142,13 +140,14 @@ Load the `data/data.noisy_linear.naft` dataset and `data/mlp.linear_neuron.naft`
 * Does the learning converge?
 * What is the effect of the `motion stddev` parameter? Does the algorithm stay stable?
 
-#### Hidden layer model
+### Hidden layer model
 
 Repeat the above for the `data/data.noisy_sine.naft` dataset and `data/mlp.tanh_deep_network.naft` model.
 
 * What is the effect of the `motion stddev` parameter? Does the algorithm stay stable?
 
-### Steepest descent
+
+## Steepest descent
 
 The steepest descent algorithm creates a sequence of model parameters based on _gradient_ information. The gradient vector for a given `weights` position points into the direction where the cost decreases the most. The magnitude of the gradient vector indicates how much the cost decreases. For a multilayered neural network, the gradient can be computed efficiently using the _back-propagation_ algorithm. This is the reason that most of the literature call the steepenst descent method also back-propagation learning.
 
@@ -161,7 +160,7 @@ The steepest descent algorithm works as follows:
 5. Accept the `candidate` always
 6. Goto step 2
 
-#### Hidden layer model
+### Hidden layer model
 
 Load the `data/data.noisy_sine.naft` data and `data/mlp.tanh_hidden_layer.naft` model. Learn it via steepest descent:
 
@@ -179,7 +178,7 @@ Repeat the above, but set the steepest descent step size to maximum.
 * What is happening?
 * Reduce the step size until behaviour is normal again
 
-#### Deep network
+### Deep network
 
 Load the `data/data.noisy_sine.naft` data and `data/mlp.tanh_deep_network.naft` model. Learn it via steepest descent:
 
@@ -187,7 +186,8 @@ Load the `data/data.noisy_sine.naft` data and `data/mlp.tanh_deep_network.naft` 
 * If the algorithm jumps from time to time, causing a drastic cost increase, reduce the `max norm`
 * Can you find a setting that always works
 
-### Scaled conjugate gradient
+
+## Scaled conjugate gradient
 
 The [scaled conjugate gradient](ftp://ftp.dca.fee.unicamp.br/pub/docs/vonzuben/ia353_1s07/papers/moller_90.pdf) learning algorithm takes, similar to the steepest descent method, steps downhill the cost landscape. Instead of taking steps as steep downhill as possible, conjugate gradient methods assume the cost landscape is quadratic. This allows for a more optimal strategy which takes the curvature into account as well. This allows conjugate gradient methods to find the minimum of a quadratic surface on $n$ steps, where is $n$ is the dimensionality of the parameter space. Especially in long, narrow valleys will this improve the learning performance.
 
@@ -195,8 +195,7 @@ As opposed to Newton and Quasi-Newton optimization methods, conjugate gradient m
 
 Finaly, the _scaled_ conjugate gradient method will automatically switch between steepest descent and conjugate gradient: when the Hessian is positive definite, conjugate gradient is used, else, steepest descent is applied. A positive definite Hessian matrix indicates that the cost landscape has a _bowl-like_ shape, as opposed to a saddle point. If the Hessian is _not_ positive definite, the cost landscape basically has no well-defined minimum, hence the transition to steepest descent behaviour.
 
-
-#### Hidden layer model
+### Hidden layer model
 
 Load the `data/data.noisy_sine.naft` data and `data/mlp.tanh_hidden_layer.naft` model. Learn it via scaled conjugate gradient:
 
@@ -207,7 +206,7 @@ Load the `data/data.noisy_sine.naft` data and `data/mlp.tanh_hidden_layer.naft` 
 * Plot the weights cost per iteration
 * Note the minimal cost found by this algorithm
 
-#### Deep network
+### Deep network
 
 Load the `data/data.noisy_sine.naft` data and `data/mlp.tanh_deep_network.naft` model. Learn it via scaled conjugate gradient:
 
@@ -224,7 +223,7 @@ Load the `data/data.noisy_sine.naft` data and `data/mlp.relu_deep_network.naft` 
 
 The [ADAM](https://machinelearningmastery.com/adam-optimization-algorithm-for-deep-learning/) algorithm performs steepest-descent-like steps, but automatically controls the step size for each parameter individually. The `alpha` parameter controls all step sizes together, while the `decay` parameter controls how fast the individual step sizes can change (exponential decay parameter).
 
-#### Deep network
+### Deep network
 
 Load the `data/data.noisy_sine.naft` data and `data/mlp.tanh_deep_network.naft` model. Learn it via ADAM:
 
@@ -234,6 +233,7 @@ Load the `data/data.noisy_sine.naft` data and `data/mlp.tanh_deep_network.naft` 
 Load the `data/data.noisy_sine.naft` data and `data/mlp.relu_deep_network.naft` model. Learn it via ADAM:
 
 * Note the minimal cost found by this algorithm
+
 
 ## 2D-2D models
 
