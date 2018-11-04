@@ -1,4 +1,6 @@
 namespace :setup do
+    home_dir = ENV["HOME"]
+
     def apt_install(*names)
         names.flatten.each do |name|
             sh "sudo apt install #{name} -y"
@@ -10,21 +12,23 @@ namespace :setup do
     end
 
     task :gubg => :bootstrap do
-        ENV["gubg"] = "#{ENV["HOME"]}/gubg" unless ENV["gubg"]
-        if !File.read("~/.bashrc")["gubg"]
-            File.open("~/.bashrc", "a") do |fo|
-                fo.puts("\n\n#GUBG environment setup")
-                fo.puts("export gubg=$HOME/gubg")
-                fo.puts("export PATH=$PATH:$gubg/bin")
-                fo.puts("export RUBYLIB=$gubg/ruby")
+        ENV["gubg"] = "#{home_dir}/gubg" unless ENV["gubg"]
+        Dir.chdir(home_dir) do
+            if !File.read(".bashrc")["gubg"]
+                File.open(".bashrc", "a") do |fo|
+                    fo.puts("\n\n#GUBG environment setup")
+                    fo.puts("export gubg=$HOME/gubg")
+                    fo.puts("export PATH=$PATH:$gubg/bin")
+                    fo.puts("export RUBYLIB=$gubg/ruby")
+                end
             end
-        end
-        if !File.exist?("gubg")
-            sh "git clone https://github.com/gfannes/gubg"
-            Dir.chdir("gubg") do
-                sh "git submodule update --init --recursive"
-                sh "rake uth"
-                sh "rake prepare"
+            if !File.exist?("gubg")
+                sh "git clone https://github.com/gfannes/gubg"
+                Dir.chdir("gubg") do
+                    sh "git submodule update --init --recursive"
+                    sh "rake uth"
+                    sh "rake prepare"
+                end
             end
         end
     end
@@ -44,8 +48,8 @@ namespace :setup do
         if !find_executable("ninja")
             rm_rf "cook-binary"
             sh "git clone https://github.com/decode-it/cook-binary"
-            if !File.read("~/.bashrc")["ninja"]
-                File.open("~/.bashrc", "a") do |fo|
+            if !File.read("#{home_dir}/.bashrc")["ninja"]
+                File.open("#{home_dir}/.bashrc", "a") do |fo|
                     fo.puts("\n\n#NINJA setup")
                     fo.puts("export PATH=$PATH:$HOME/cook-binary/ninja/linux")
                 end
@@ -59,10 +63,12 @@ namespace :setup do
     task :cook => [:ninja, :gcc] do
         require("mkmf")
         if !find_executable("cook")
-            rm_rf "cook"
-            sh "git clone https://github.com/decode-it/cook"
-            Dir.chdir("cook") do
-                sh "rake install"
+            Dir.chdir(home_dir) do
+                rm_rf "cook"
+                sh "git clone https://github.com/decode-it/cook"
+                Dir.chdir("cook") do
+                    sh "rake install"
+                end
             end
         end
     end
