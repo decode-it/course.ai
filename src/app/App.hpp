@@ -670,7 +670,7 @@ namespace app {
                         break;
                     case Algo::SteepestDescent:
                         {
-                            ImGui::SliderFloat("Steepest descent step", &learn.sd_step, 0.0, 0.01);
+                            ImGui::SliderFloat("Steepest descent step size", &learn.sd_step, 0.0, 0.01);
 
                             ImGui::SliderFloat("Steepest descent max norm", &learn.sd_max_norm, 0.0, 100.0);
                             trainer.set_max_gradient_norm(learn.sd_max_norm);

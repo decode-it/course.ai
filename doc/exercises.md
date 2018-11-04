@@ -153,12 +153,19 @@ The steepest descent algorithm creates a sequence of model parameters based on _
 The steepest descent algorithm works as follows:
 
 1. Suppose we are located in `weights`
-2. Compute the gradient of the cost, computed in `weights`
-3. Step into the gradient direction, with a given step-size: `candidate = weights + gradient*stepsize`
-4. Accept the `candidate` always
-5. Goto step 2
+2. Compute the `gradient` of the cost, computed in `weights`
+3. Reduce the `gradient` $L_2$-norm to `max norm`, if needed: $gradient = gradient (max norm/L_2 norm)$
+4. Step into the gradient direction, with a given step-size: `candidate = weights + gradient*stepsize`
+5. Accept the `candidate` always
+6. Goto step 2
 
-            [necessity to randomize the weights before learning]
+#### Hidden layer model
+
+Load the `data/data.noisy_sine.naft` data and `data/mlp.tanh_hidden_layer.naft` model. Learn it via steepest descent:
+
+* What happens? Why?
+* How can this start-up problem be fixed?
+
             [alternating SD]
             [wrong error landscape for SCG]
             [visualize weight decay shape]
