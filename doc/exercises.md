@@ -1,7 +1,14 @@
 Multilayer Perceptron Exercises
 ===============================
 
-These exercises use the 'bin/ai.app' application. This application was built for Ubuntu 16.04.
+These exercises use the 'bin/ai.app' application, to be found in the [course.ai](https://github.com/decode-it/course.ai) repository.
+
+To clone this repository, use the following commands:
+
+     sudo apt install git
+     git clone https://github.com/decode-it/course.ai
+
+This application was built for Ubuntu 16.04.
 
 ## Input/output mapping
 
