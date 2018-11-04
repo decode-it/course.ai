@@ -68,5 +68,5 @@ namespace :setup do
     end
 
     desc "Setup for Ubuntu 16"
-    task :ub16 => [:gubg, :gcc, :cook, :subsoil]
+    task :ub16 => [:gubg, :gcc, :cook]
 end
