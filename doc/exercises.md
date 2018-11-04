@@ -165,6 +165,20 @@ Load the `data/data.noisy_sine.naft` data and `data/mlp.tanh_hidden_layer.naft` 
 
 * What happens? Why?
 * How can this start-up problem be fixed?
+* Plot the path followed by the weights of the weights of the first 2 hidden neurons
+* Plot the data cost per iteration
+* Plot the weights cost per iteration
+
+Repeat the above, but set the steepest descent step size to maximum.
+
+* What happens?
+* Plot the path followed by the weights of the weights of the first 2 hidden neurons: what do you see?
+* What is happening?
+* Reduce the step size until behaviour is normal again
+
+### Scaled conjugate gradient
+
+The scaled conjugate gradient learning algorithm
 
             [alternating SD]
             [wrong error landscape for SCG]
