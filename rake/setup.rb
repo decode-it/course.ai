@@ -46,16 +46,18 @@ namespace :setup do
     task :ninja do
         require("mkmf")
         if !find_executable("ninja")
-            rm_rf "cook-binary"
-            sh "git clone https://github.com/decode-it/cook-binary"
-            if !File.read("#{home_dir}/.bashrc")["ninja"]
-                File.open("#{home_dir}/.bashrc", "a") do |fo|
-                    fo.puts("\n\n#NINJA setup")
-                    fo.puts("export PATH=$PATH:$HOME/cook-binary/ninja/linux")
+            Dir.chdir(home_dir) do
+                rm_rf "cook-binary"
+                sh "git clone https://github.com/decode-it/cook-binary"
+                if !File.read("#{home_dir}/.bashrc")["ninja"]
+                    File.open("#{home_dir}/.bashrc", "a") do |fo|
+                        fo.puts("\n\n#NINJA setup")
+                        fo.puts("export PATH=$PATH:$HOME/cook-binary/ninja/linux")
+                    end
                 end
-            end
-            if !ENV["PATH"]["ninja"]
-                ENV["PATH"] = "#{ENV["PATH"]}:#{ENV["HOME"]}/cook-binary/ninja/linux"
+                if !ENV["PATH"]["ninja"]
+                    ENV["PATH"] = "#{ENV["PATH"]}:#{ENV["HOME"]}/cook-binary/ninja/linux"
+                end
             end
         end
     end
