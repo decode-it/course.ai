@@ -630,6 +630,10 @@ namespace app {
                                 }
                                 else
                                 {
+                                    for (auto ix: learn.current_ixs)
+                                        std::cout << ix << ' ';
+                                    std::cout << std::endl;
+
                                     if (learn.best_ixs.empty() || learn.total_ll > learn.best_ll)
                                     {
                                         learn.best_ixs = learn.current_ixs;
@@ -658,11 +662,9 @@ namespace app {
                                     {
                                         learn.do_learn = false;
                                         set_weights(learn.best_ixs);
+                                        learn.current_ixs.clear();
                                     }
                                 }
-                                for (auto ix: learn.current_ixs)
-                                    std::cout << ix << ' ';
-                                std::cout << std::endl;
                             }
                         }
                         break;
