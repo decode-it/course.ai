@@ -40,10 +40,10 @@ namespace app {
             load_font_();
 
             auto desktop_mode = sf::VideoMode::getDesktopMode();
-            /* if (false) */
+            if (false)
             {
                 desktop_mode.width /= 2;
-                /* desktop_mode.height /= 2; */
+                desktop_mode.height /= 2;
             }
             sf::RenderWindow window(desktop_mode, "");
 
@@ -117,22 +117,25 @@ namespace app {
             }
 
             MSS(load_model_());
-
             if (model_)
             {
                 MSS(display_mlp_structure_());
-                MSS(display_cost_weight_decay_());
                 MSS(display_weight_randomization_());
                 MSS(simulate_mlp_());
             }
 
+            ImGui::Separator();
+
             MSS(load_data_());
-
             if (dataset_)
+            {
                 MSS(display_data_());
+            }
 
+            ImGui::Separator();
             if (model_ && dataset_)
             {
+                MSS(display_cost_weight_decay_());
                 MSS(display_cost_());
                 MSS(learn_model_());
             }
@@ -142,8 +145,8 @@ namespace app {
         bool load_model_()
         {
             MSS_BEGIN(bool);
-            const bool setup_default_structure = (true && structure_fn_.empty());
-            if (setup_default_structure || gubg::imgui::select_file("MLP structure", structure_fn_))
+            const bool setup_default_structure = (false && structure_fn_.empty());
+            if (setup_default_structure || gubg::imgui::select_file("Load model", structure_fn_))
             {
                 if (setup_default_structure)
                     structure_fn_ = "data/mlp.tanh_neuron.naft";
@@ -164,8 +167,8 @@ namespace app {
         bool load_data_()
         {
             MSS_BEGIN(bool);
-            const bool setup_default_data = (true && data_fn_.empty());
-            if (setup_default_data || gubg::imgui::select_file("Dataset", data_fn_))
+            const bool setup_default_data = (false && data_fn_.empty());
+            if (setup_default_data || gubg::imgui::select_file("Load data", data_fn_))
             {
                 if (setup_default_data)
                     data_fn_ = "data/data.noisy_sine.naft";

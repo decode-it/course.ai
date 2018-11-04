@@ -20,6 +20,12 @@ task :build do
     cooker().option("release").generate(:ninja, "ai/app").ninja().run()
 end
 
+desc "Create documentation"
+task :doc do
+    sh "pandoc -o exercises.pdf doc/exercises.md"
+    sh "evince exercises.pdf"
+end
+
 desc "clean"
 task :clean do
     rm FileList.new("*.naft")
