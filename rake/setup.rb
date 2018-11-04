@@ -31,6 +31,7 @@ namespace :setup do
                 end
             end
         end
+        apt_install(%w[libsfml-dev libudev-dev libopenal-dev libflac-dev libvorbis-dev libxrandr-dev libegl1-mesa-dev libxcb-image0-dev libjpeg-dev libfreetype6-dev freeglut3-dev])
     end
 
     task :gcc do
