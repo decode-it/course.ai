@@ -11,7 +11,11 @@ namespace :setup do
         apt_install("git", "ruby-dev", "vim-gtk3")
     end
 
-    task :gubg => :bootstrap do
+    task :sfml do
+        apt_install(%w[libsfml-dev libudev-dev libopenal-dev libflac-dev libvorbis-dev libxrandr-dev libegl1-mesa-dev libxcb-image0-dev libjpeg-dev libfreetype6-dev freeglut3-dev])
+    end
+
+    task :gubg => [:bootstrap, :sfml] do
         ENV["gubg"] = "#{home_dir}/gubg" unless ENV["gubg"]
         Dir.chdir(home_dir) do
             if !File.read(".bashrc")["gubg"]
@@ -31,7 +35,6 @@ namespace :setup do
                 end
             end
         end
-        apt_install(%w[libsfml-dev libudev-dev libopenal-dev libflac-dev libvorbis-dev libxrandr-dev libegl1-mesa-dev libxcb-image0-dev libjpeg-dev libfreetype6-dev freeglut3-dev])
     end
 
     task :gcc do
