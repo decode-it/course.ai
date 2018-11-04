@@ -92,6 +92,8 @@ Install `gnuplot` and use it to visualize:
 * The grid search exhaustive learning performs
 
       plot "data.ssv" using 1:2 with lines, "data.ssv" using 1:2
+      OR
+      plot "data.ssv" using 1:2 with linespoints
 
 * The shape of the weight cost
 
