@@ -11,8 +11,8 @@ namespace :setup do
 
     task :gubg => :bootstrap do
         ENV["gubg"] = "#{ENV["HOME"]}/gubg" unless ENV["gubg"]
-        if !File.read(".bashrc")["gubg"]
-            File.open(".bashrc", "a") do |fo|
+        if !File.read("~/.bashrc")["gubg"]
+            File.open("~/.bashrc", "a") do |fo|
                 fo.puts("\n\n#GUBG environment setup")
                 fo.puts("export gubg=$HOME/gubg")
                 fo.puts("export PATH=$PATH:$gubg/bin")
@@ -44,8 +44,8 @@ namespace :setup do
         if !find_executable("ninja")
             rm_rf "cook-binary"
             sh "git clone https://github.com/decode-it/cook-binary"
-            if !File.read(".bashrc")["ninja"]
-                File.open(".bashrc", "a") do |fo|
+            if !File.read("~/.bashrc")["ninja"]
+                File.open("~/.bashrc", "a") do |fo|
                     fo.puts("\n\n#NINJA setup")
                     fo.puts("export PATH=$PATH:$HOME/cook-binary/ninja/linux")
                 end
