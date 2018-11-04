@@ -16,7 +16,8 @@ std::mt19937 rng;
 int main()
 {
     S("");
-    enum {LinearNeuron,
+    enum {
+        LinearNeuron, LinearHiddenLayer,
         TanhNeuron, TanhHiddenLayer, TanhDeepNetwork,
         LeakyReLUNeuron, LeakyReLUHiddenLayer, LeakyReLUDeepNetwork,
         SoftPlusNeuron, SoftPlusHiddenLayer, SoftPlusDeepNetwork,
@@ -34,6 +35,12 @@ int main()
                 mlp.emplace(1);
                 mlp->add_layer(neural::Transfer::Linear, 1, 0.0, 0.0);
                 fn = "mlp.linear_neuron.naft";
+                break;
+            case LinearHiddenLayer:
+                mlp.emplace(1);
+                mlp->add_layer(neural::Transfer::Linear, 5, 0.0, 0.0);
+                mlp->add_layer(neural::Transfer::Linear, 1, 0.0, 0.0);
+                fn = "mlp.linear_hidden_layer.naft";
                 break;
             case TanhNeuron:
                 mlp.emplace(1);
