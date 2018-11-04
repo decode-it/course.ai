@@ -553,7 +553,7 @@ namespace app {
             {
                 auto &trainer = *learn.trainer;
 
-                if (ImGui::RadioButton("No", learn.algo == Algo::NoLearn))
+                if (ImGui::RadioButton("NoLearn", learn.algo == Algo::NoLearn))
                     learn.algo = Algo::NoLearn;
                 ImGui::SameLine();
                 if (ImGui::RadioButton("Exhaustive", learn.algo == Algo::Exhaustive))

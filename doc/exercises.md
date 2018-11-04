@@ -67,9 +67,20 @@ Repeat the same exercise for `data/data.noisy_sine.naft` and `data/mlp.tanh_hidd
 
 ### Exhaustive learning
 
-Exhaustive learning will change the model parameters independently, effectively walking a grid.
+Exhaustive learning will change selected model parameters independently, effectively walking a grid. To use the exhaustive learning mode, you have to:
 
-### Single neuron models
+* Load a model
+* Load a dataset
+* Select `Exhaustive` learning mode. When learning is not yet activated, selecting `Exhaustive` learning mode will add checkboxes next to the model parameters. These checkboxes allow the user to select the parameters that should be learned.
+* Set the desired number of points to scan.
+* Enable the `Learn` checkbox. Once exhaustive learning search the grid for the optimal parameters, it will switch into `NoLearn` learning mode.
+
+#### Linear regression
+
+Load the `data/data.noisy_linear.naft` dataset and `data/mlp.linear_neuron.naft` model. Use exhaustive learning to search the weight and bias space for this simple model.
+
+* Note down how long this learning mode takes for e.g., 40 steps in 2 dimensions.
+* Can it do better than your manual learning above?
 
 #### Linear regression
             [how long will it take to learn the deep model with the exhaustive method]
