@@ -23,7 +23,7 @@ end
 desc "Create documentation"
 task :doc do
     sh "pandoc -o doc/exercises.pdf doc/exercises.md"
-    sh "evince exercises.pdf"
+    sh "evince doc/exercises.pdf"
 end
 
 desc "clean"

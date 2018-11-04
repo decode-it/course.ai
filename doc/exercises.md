@@ -1,6 +1,8 @@
 Multilayer Perceptron Exercises
 ===============================
 
+These exercises use the 'bin/ai.app' application. This application was built for Ubuntu 16.04.
+
 ## Input/output mapping
 
 ### Single neuron models
