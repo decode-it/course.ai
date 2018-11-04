@@ -170,6 +170,7 @@ Load the `data/data.noisy_sine.naft` data and `data/mlp.tanh_hidden_layer.naft` 
 * Plot the path followed by the weights of the weights of the first 2 hidden neurons
 * Plot the data cost per iteration
 * Plot the weights cost per iteration
+* Note the minimal cost found by this algorithm
 
 Repeat the above, but set the steepest descent step size to maximum.
 
@@ -178,13 +179,76 @@ Repeat the above, but set the steepest descent step size to maximum.
 * What is happening?
 * Reduce the step size until behaviour is normal again
 
+#### Deep network
+
+Load the `data/data.noisy_sine.naft` data and `data/mlp.tanh_deep_network.naft` model. Learn it via steepest descent:
+
+* If the algorithm starts to oscillate, reduce the `step size`
+* If the algorithm jumps from time to time, causing a drastic cost increase, reduce the `max norm`
+* Can you find a setting that always works
+
 ### Scaled conjugate gradient
 
-The scaled conjugate gradient learning algorithm
+The [scaled conjugate gradient](ftp://ftp.dca.fee.unicamp.br/pub/docs/vonzuben/ia353_1s07/papers/moller_90.pdf) learning algorithm takes, similar to the steepest descent method, steps downhill the cost landscape. Instead of taking steps as steep downhill as possible, conjugate gradient methods assume the cost landscape is quadratic. This allows for a more optimal strategy which takes the curvature into account as well. This allows conjugate gradient methods to find the minimum of a quadratic surface on $n$ steps, where is $n$ is the dimensionality of the parameter space. Especially in long, narrow valleys will this improve the learning performance.
 
-            [alternating SD]
-            [wrong error landscape for SCG]
-            [visualize weight decay shape]
-            [visualize trade-off between cost and WD]
-            [plot path for SD]
+As opposed to Newton and Quasi-Newton optimization methods, conjugate gradient methods do not require the computation or explicit storage of the Hessian matrix, the matrix with second-order derivative information. Especially for optimization problems with many parameters, this is a huge advantage that allows the memory complexity to remain $O(n)$ in stead of $O(n^2)$.
 
+Finaly, the _scaled_ conjugate gradient method will automatically switch between steepest descent and conjugate gradient: when the Hessian is positive definite, conjugate gradient is used, else, steepest descent is applied. A positive definite Hessian matrix indicates that the cost landscape has a _bowl-like_ shape, as opposed to a saddle point. If the Hessian is _not_ positive definite, the cost landscape basically has no well-defined minimum, hence the transition to steepest descent behaviour.
+
+
+#### Hidden layer model
+
+Load the `data/data.noisy_sine.naft` data and `data/mlp.tanh_hidden_layer.naft` model. Learn it via scaled conjugate gradient:
+
+* What happens? Why?
+* How can this start-up problem be fixed?
+* Plot the path followed by the weights of the weights of the first 2 hidden neurons
+* Plot the data cost per iteration
+* Plot the weights cost per iteration
+* Note the minimal cost found by this algorithm
+
+#### Deep network
+
+Load the `data/data.noisy_sine.naft` data and `data/mlp.tanh_deep_network.naft` model. Learn it via scaled conjugate gradient:
+
+* Change the `Output stddev` during learning. What happens to the `data cost` and the input/output mapping?
+* Change the `Weight stddev` during learning. What happens to the `data cost` and the input/output mapping?
+* Set the `Output stddev` to minimum, and `Weight stddev` to maximum. What happens to the generalization power of the network.
+
+Load the `data/data.noisy_sine.naft` data and `data/mlp.relu_deep_network.naft` model. Learn it via scaled conjugate gradient:
+
+* Note the minimal cost found by this algorithm
+
+
+## ADAM
+
+The [ADAM](https://machinelearningmastery.com/adam-optimization-algorithm-for-deep-learning/) algorithm performs steepest-descent-like steps, but automatically controls the step size for each parameter individually. The `alpha` parameter controls all step sizes together, while the `decay` parameter controls how fast the individual step sizes can change (exponential decay parameter).
+
+#### Deep network
+
+Load the `data/data.noisy_sine.naft` data and `data/mlp.tanh_deep_network.naft` model. Learn it via ADAM:
+
+* Change the `ADAM step size` during learning. What happens?
+* Change the `ADAM decay` during learning. What happens?
+
+Load the `data/data.noisy_sine.naft` data and `data/mlp.relu_deep_network.naft` model. Learn it via ADAM:
+
+* Note the minimal cost found by this algorithm
+
+## 2D-2D models
+
+When switching from 1D-1D models to 2D-2D models, restart the `ai.app`. 2D data is indicated via green arrows: the position is the input, the direction of the arrow is the output. The network input/output mapping is represented via red arrows. Note that these red arrows are represented a bit smaller than the green arrows to keep the visualization clear enough.
+
+### Deep network
+
+Load the `data/data.circle.naft` dataset and any of the `data/mlp.25552.naft` model. Try to learn it using a variety of learning algorihtms.
+
+Load the `data/data.two_circle.naft` dataset and any of the `data/mlp.25552.naft` model. Try to learn it using a variety of learning algorihtms.
+
+### Auto-encoder
+
+This multi-layer perceptron model consists of several hidden layers, where one layer has a smaller number of neurons than the input/output layer. When such a model is fed with the same output values as the input values, the model is forced to convert the input representation into a different, lower dimensional representation. This is often a more robust representation that has a higher abstraction, which can be useful.
+
+Load the `data/data.circle.naft` dataset and any of the `data/mlp.2551552*.naft` models. Try to learn them using a variety of learning algorihtms.
+
+* What representation could the network use?
