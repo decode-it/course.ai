@@ -22,7 +22,7 @@ end
 
 desc "Create documentation"
 task :doc do
-    sh "pandoc -o doc/exercises.pdf doc/exercises.md"
+    sh "pandoc --number-sections -o doc/exercises.pdf doc/exercises.md"
     sh "evince doc/exercises.pdf"
 end
 
